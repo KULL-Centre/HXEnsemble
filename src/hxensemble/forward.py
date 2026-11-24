@@ -110,7 +110,7 @@ def calc_sasa_hbonds(trj, sasa_threshold=0.5, distance_threshold=0.26,
             trj.top.atom(int(j)).name == 'N'
         )], dtype=int)
         acceptor_idx = np.concatenate((oxygen_idx, fluor, nitrogen_idx))
-        neigh = md.compute_neighbors(trj, distance_threshold, np.array([h]), acceptor_idx)
+        neigh = md.compute_neighbors(trj, distance_threshold, np.array([h]), acceptor_idx, periodic=False)
 
         hbonds_count = []
         for frame, frame_neighbors in enumerate(neigh):
@@ -179,7 +179,7 @@ def calc_rho_front(trj, N_idx, H_idx, exclude_neighbors=False,
             continue
         neighbours = md.compute_neighbors(trj, cutoff=cutoff_nm,
                                           query_indices=np.array([H], dtype=int),
-                                          haystack_indices=allowed_heavy)
+                                          haystack_indices=allowed_heavy, periodic=False)
         for f, nbrs in enumerate(neighbours):
             if len(nbrs) == 0:
                 continue
