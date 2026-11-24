@@ -33,7 +33,7 @@ def openmm_charges(pdb_file, forcefield='amber14'):
 
 
 def json_charges(pdb_file, json_file=DEFAULT_JSON):
-    """JSON lookup.
+    """JSON lookup with histidine protonation-state detection.
     Terminal residue names use the minimum/maximum PDB residue numbers.
     """
     _, PDBFile, _, _ = _openmm()
@@ -43,13 +43,52 @@ def json_charges(pdb_file, json_file=DEFAULT_JSON):
     pdb_openmm = PDBFile(str(pdb_file))
     topology = pdb_openmm.topology
 
+    histidine_names = {
+        'HIS', 'HID', 'HIE', 'HIP',
+        'HSD', 'HSE', 'HSP',
+        'HISD', 'HISE', 'HISH'
+    }
+
+    # Collect all histidine atoms, including separately listed hydrogens
+    histidine_atoms = {}
+
+    for atom in topology.atoms():
+        residue = atom.residue
+        if residue.name in histidine_names:
+            key = (residue.chain.id, residue.id, residue.insertionCode)
+            histidine_atoms.setdefault(key, set()).add(atom.name)
+
+    # Determine protonation state for each histidine
+    histidine_states = {}
+
+    for key, names in histidine_atoms.items():
+        hd1 = 'HD1' in names
+        he2 = 'HE2' in names
+
+        if hd1 and he2:
+            histidine_states[key] = 'HIP'
+        elif hd1:
+            histidine_states[key] = 'HID'
+        elif he2:
+            histidine_states[key] = 'HIE'
+        else:
+            raise ValueError(f'Histidine {key} has neither HD1 nor HE2')
+
+    # Collect atoms in original order
     residue_numbers = []
     residue_names = []
     atom_names = []
+
     for atom in topology.atoms():
         residue = atom.residue
+        resname = residue.name
+
+        if resname in histidine_names:
+            key = (residue.chain.id, residue.id, residue.insertionCode)
+            resname = histidine_states[key]
+
         residue_numbers.append(int(residue.id))
-        residue_names.append(residue.name)
+        residue_names.append(resname)
         atom_names.append(atom.name)
 
     if not residue_numbers:
@@ -58,6 +97,7 @@ def json_charges(pdb_file, json_file=DEFAULT_JSON):
     final_residue_names = []
     start_residue = np.min(residue_numbers)
     end_residue = np.max(residue_numbers)
+
     for resname, resid in zip(residue_names, residue_numbers):
         if resid == start_residue:
             final_residue_names.append('N' + resname)
@@ -67,17 +107,12 @@ def json_charges(pdb_file, json_file=DEFAULT_JSON):
             final_residue_names.append(resname)
 
     charges = []
-    for resname, atom, resnum in zip(final_residue_names, atom_names, residue_numbers):
+
+    for resname, atom in zip(final_residue_names, atom_names):
         if resname[0] == 'N' and atom == 'H':
             atom = 'H1'
-        if resname == 'HIS':
-            try:
-                ch = float(charge_dict['HID'][atom])
-            except (KeyError, ValueError):
-                ch = float(charge_dict['HIE'][atom])
-        else:
-            ch = float(charge_dict[resname][atom])
-        charges.append(ch)
+
+        charges.append(float(charge_dict[resname][atom]))
 
     return np.array(charges)
 
