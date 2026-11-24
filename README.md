@@ -250,4 +250,4 @@ The test suite checks forward-model combination rules and atom selection, matchi
 
 If you use HXEnsemble in your research, please cite:
 
-Streit J.O., Peterle D., Tesei G., Invernizzi M., Bottaro S., Schulze T.K., Kunz P., Tamiola K., Lindorff-Larsen K. (2026). *Integrating hydrogen-exchange experiments with conformational ensembles*. **bioRxiv**. Link TBA.
+Streit J.O., Peterle D., Tesei G., Invernizzi M., Bottaro S., Schulze T.K., Kunz P., Tamiola K., Lindorff-Larsen K. (2026). *Integrating hydrogen-exchange experiments with conformational ensembles*. **bioRxiv**. [https://doi.org/10.64898/2026.11.23.768707](https://doi.org/10.64898/2026.11.23.768707).
