@@ -108,16 +108,12 @@ def get_side_chain_dictionary(temperature, pH, k_reference):
        ('N-Term', 'NT',   0., -1.32,   0.,  1.62),
        ('C-Term', 'CT',   0.,   0., -1.8 ,   0.)]) # C-Term lambda acid value calculated based on pH and pKa
 
-    side_chain_dict = {elem[1]: np.array(list(elem)[2:]) for elem in side_chain_array} # elem[1] = short name
+    side_chain_dict = {elem[1]: np.array(list(elem)[2:], dtype=float) for elem in side_chain_array} # elem[1] = short name
     for residue in ['D', 'E', 'H']: # residues D, E, H are calculated based on pH and pKa
         k_corrected = -np.log10(10**-k_reference[residue] * np.exp(-E_act[residue] * (1 / temperature - 1 / 278) / R)) # Check correct reference temperature
 
         deprotenated = side_chain_dict[residue + '0']
         protenated = side_chain_dict[residue + '+']
-
-        # Ensure protenated and deprotenated values are float arrays before performing arithmetic
-        protenated = np.array(protenated, dtype=float)
-        deprotenated = np.array(deprotenated, dtype=float)
 
         values = np.log10(np.divide(10 ** (protenated - pH) + 10 ** (deprotenated - k_corrected),
                                 10 ** -k_corrected + 10 ** -pH))
